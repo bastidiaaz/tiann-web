@@ -37,7 +37,6 @@ function App() {
         <OrbitControls />
         <Suspense fallback={null}>
           <Ground />
-          <perspectiveCamera args={[60, 1920 / 1080, 1.0, 1000.0]} position={[25, 10, 25]} />
           <Character camera={camera} />
           <Nature />
         </Suspense>
