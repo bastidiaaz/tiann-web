@@ -93,9 +93,8 @@ const Nature: React.FC = () => {
     o.receiveShadow = true;
   });
 
-  const objects: React.JSX.Element[] = [];
-
-  const createTrees = useMemo(() => {
+  const objects = useMemo(() => {
+    const items: React.JSX.Element[] = [];
     for (let i = 0; i < 100; i++) {
       const idx: number = Math.floor(Math.random() * 11) + 1;
       const pos = new THREE.Vector3(
@@ -136,9 +135,10 @@ const Nature: React.FC = () => {
         />
       );
 
-      objects.push(obj);
+      items.push(obj);
     }
-  }, []);
+    return items;
+  }, [birch3, birch4, berry1, ctree3, ctree5, grass2, grass, rock1, rock5, willow2, willow5, log]);
 
   return (
     <group>

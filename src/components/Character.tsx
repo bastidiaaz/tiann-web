@@ -18,21 +18,14 @@ interface CharacterProps {
 const Character: React.FC<CharacterProps> = ({ camera }) => {
   const character = useRef<Mesh>(null!);
 
-  const activeAnimation: {
-    forward: boolean;
-    backward: boolean;
-    left: boolean;
-    right: boolean;
-    run: boolean;
-    dance: boolean;
-  } = {
+  const activeAnimation = useRef({
     forward: false,
     backward: false,
     left: false,
     right: false,
     run: false,
     dance: false,
-  };
+  });
 
   const animations: Animations = {};
 
@@ -85,31 +78,31 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
     switch (event.keyCode) {
       case 87: //w
-        activeAnimation.forward = true;
+        activeAnimation.current.forward = true;
 
         break;
 
       case 65: //a
-        activeAnimation.left = true;
+        activeAnimation.current.left = true;
 
         break;
 
       case 83: //s
-        activeAnimation.backward = true;
+        activeAnimation.current.backward = true;
 
         break;
 
       case 68: // d
-        activeAnimation.right = true;
+        activeAnimation.current.right = true;
 
         break;
 
       case 69: //e dance
-        activeAnimation.dance = true;
+        activeAnimation.current.dance = true;
 
         break;
       case 16: // shift
-        activeAnimation.run = true;
+        activeAnimation.current.run = true;
         break;
     }
   }, []);
@@ -117,27 +110,27 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     switch (event.keyCode) {
       case 87: //w
-        activeAnimation.forward = false;
+        activeAnimation.current.forward = false;
         break;
 
       case 65: //a
-        activeAnimation.left = false;
+        activeAnimation.current.left = false;
         break;
 
       case 83: //s
-        activeAnimation.backward = false;
+        activeAnimation.current.backward = false;
         break;
 
       case 68: // d
-        activeAnimation.right = false;
+        activeAnimation.current.right = false;
         break;
 
       case 69: //e dance
-        activeAnimation.dance = false;
+        activeAnimation.current.dance = false;
         break;
 
       case 16: // shift
-        activeAnimation.run = false;
+        activeAnimation.current.run = false;
         break;
     }
   }, []);
@@ -189,7 +182,7 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
     const _R = controlObject.quaternion.clone();
 
     const acc = acceleration.clone();
-    if (activeAnimation.run) {
+    if (activeAnimation.current.run) {
       acc.multiplyScalar(2.0);
     }
 
@@ -197,18 +190,18 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
       acc.multiplyScalar(0.0);
     }
 
-    if (activeAnimation.forward) {
+    if (activeAnimation.current.forward) {
       newVelocity.z += acc.z * delta;
     }
-    if (activeAnimation.backward) {
+    if (activeAnimation.current.backward) {
       newVelocity.z -= acc.z * delta;
     }
-    if (activeAnimation.left) {
+    if (activeAnimation.current.left) {
       _A.set(0, 1, 0);
       _Q.setFromAxisAngle(_A, 4.0 * Math.PI * delta * acceleration.y);
       _R.multiply(_Q);
     }
-    if (activeAnimation.right) {
+    if (activeAnimation.current.right) {
       _A.set(0, 1, 0);
       _Q.setFromAxisAngle(_A, 4.0 * -Math.PI * delta * acceleration.y);
       _R.multiply(_Q);
@@ -240,31 +233,31 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
   useFrame((state, delta) => {
     prevAction = currAction;
 
-    if (activeAnimation.forward) {
-      if (activeAnimation.run) {
+    if (activeAnimation.current.forward) {
+      if (activeAnimation.current.run) {
         currAction = animations["run"].clip;
       } else {
         currAction = animations["walk"].clip;
       }
-    } else if (activeAnimation.left) {
-      if (activeAnimation.run) {
+    } else if (activeAnimation.current.left) {
+      if (activeAnimation.current.run) {
         currAction = animations["run"].clip;
       } else {
         currAction = animations["walk"].clip;
       }
-    } else if (activeAnimation.right) {
-      if (activeAnimation.run) {
+    } else if (activeAnimation.current.right) {
+      if (activeAnimation.current.run) {
         currAction = animations["run"].clip;
       } else {
         currAction = animations["walk"].clip;
       }
-    } else if (activeAnimation.backward) {
-      if (activeAnimation.run) {
+    } else if (activeAnimation.current.backward) {
+      if (activeAnimation.current.run) {
         currAction = animations["run"].clip;
       } else {
         currAction = animations["walk"].clip;
       }
-    } else if (activeAnimation.dance) {
+    } else if (activeAnimation.current.dance) {
       currAction = animations["dance"].clip;
     } else {
       currAction = animations["idle"].clip;
@@ -302,7 +295,7 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
 
       document.removeEventListener("keyup", handleKeyUp);
     };
-  });
+  }, []);
 
   return <primitive object={c} ref={character} />;
 };
