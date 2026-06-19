@@ -82,7 +82,7 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
   let prevAction: THREE.AnimationAction;
 
   // Controll Input
-  const handleKeyPress = useCallback((event) => {
+  const handleKeyPress = useCallback((event: KeyboardEvent) => {
     switch (event.keyCode) {
       case 87: //w
         activeAnimation.forward = true;
@@ -114,7 +114,7 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
     }
   }, []);
 
-  const handleKeyUp = useCallback((event) => {
+  const handleKeyUp = useCallback((event: KeyboardEvent) => {
     switch (event.keyCode) {
       case 87: //w
         activeAnimation.forward = false;

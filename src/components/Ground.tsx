@@ -38,7 +38,7 @@ const Ground: React.FC = () => {
       <planeBufferGeometry
         attach="geometry"
         args={[1000, 1000, 250, 250]}
-        ref={terrain}
+        ref={terrain as any}
       />
 
       <meshPhongMaterial attach="material" color="#69b581" />

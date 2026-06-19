@@ -38,13 +38,13 @@ function App() {
   return (
     <div className="w-full h-screen bg-fuchsia-100">
       <Canvas shadows camera={camera}>
-        <hemisphereLight {...hemiLight} />/
-        <directionalLight {...light} />
+        <hemisphereLight {...(hemiLight as any)} />
+        <directionalLight {...(light as any)} />
         <ambientLight intensity={0.1} />
         <OrbitControls />
         <Suspense fallback={null}>
           <Ground />
-          <perspectiveCamera {...camera} />
+          <perspectiveCamera {...(camera as any)} />
           <Character camera={camera} />
           <Nature />
         </Suspense>
