@@ -1,9 +1,9 @@
 import React, { useLayoutEffect, useMemo, useRef } from "react";
-import SimplexNoise from "simplex-noise";
+import { createNoise2D } from "simplex-noise";
 import * as THREE from "three";
 
 const Ground: React.FC = () => {
-  const simplex = useMemo(() => new SimplexNoise(), []);
+  const noise2D = useMemo(() => createNoise2D(), []);
 
   const terrain = useRef<THREE.PlaneGeometry>(null!);
 
@@ -19,11 +19,11 @@ const Ground: React.FC = () => {
         const ex = Math.random() * 1.3;
         // @ts-ignore
         pa[3 * (j * wVerts + i) + 2] =
-          (simplex.noise2D(i / 100, j / 100) +
-            simplex.noise2D((i + 200) / 50, j / 50) * Math.pow(ex, 1) +
-            simplex.noise2D((i + 400) / 25, j / 25) * Math.pow(ex, 2) +
-            simplex.noise2D((i + 600) / 12.5, j / 12.5) * Math.pow(ex, 3) +
-            +(simplex.noise2D((i + 800) / 6.25, j / 6.25) * Math.pow(ex, 4))) /
+          (noise2D(i / 100, j / 100) +
+            noise2D((i + 200) / 50, j / 50) * Math.pow(ex, 1) +
+            noise2D((i + 400) / 25, j / 25) * Math.pow(ex, 2) +
+            noise2D((i + 600) / 12.5, j / 12.5) * Math.pow(ex, 3) +
+            +(noise2D((i + 800) / 6.25, j / 6.25) * Math.pow(ex, 4))) /
           2;
       }
     }
