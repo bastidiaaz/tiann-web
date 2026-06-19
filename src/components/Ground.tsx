@@ -35,10 +35,10 @@ const Ground: React.FC = () => {
 
   return (
     <mesh position={[0, 0, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-      <planeBufferGeometry
+      <planeGeometry
         attach="geometry"
         args={[1000, 1000, 250, 250]}
-        ref={terrain as any}
+        ref={terrain}
       />
 
       <meshPhongMaterial attach="material" color="#69b581" />

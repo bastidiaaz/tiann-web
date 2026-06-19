@@ -1,7 +1,7 @@
 import { useLoader } from "@react-three/fiber";
 import React, { useMemo } from "react";
 import * as THREE from "three";
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 
 const Nature: React.FC = () => {
   const [
@@ -17,7 +17,7 @@ const Nature: React.FC = () => {
     willow2,
     willow5,
     log,
-  ] = useLoader(FBXLoader, [
+  ] = useLoader(FBXLoader as any, [
     "./textures/nature/BirchTree_3.fbx",
     "./textures/nature/BirchTree_4.fbx",
     "./textures/nature/BushBerries_1.fbx",
@@ -33,67 +33,67 @@ const Nature: React.FC = () => {
   ]);
 
   birch3.scale.setScalar(0.4);
-  birch3.traverse((o) => {
+  birch3.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   birch4.scale.setScalar(0.3);
-  birch4.traverse((o) => {
+  birch4.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   berry1.scale.setScalar(0.08);
-  berry1.traverse((o) => {
+  berry1.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   grass2.scale.setScalar(0.05);
-  grass2.traverse((o) => {
+  grass2.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   grass.scale.setScalar(0.05);
-  grass.traverse((o) => {
+  grass.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   rock1.scale.setScalar(0.2);
-  rock1.traverse((o) => {
+  rock1.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   rock5.scale.setScalar(0.2);
-  rock5.traverse((o) => {
+  rock5.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   willow2.scale.setScalar(0.4);
-  willow2.traverse((o) => {
+  willow2.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   willow5.scale.setScalar(0.5);
-  willow5.traverse((o) => {
+  willow5.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   log.scale.setScalar(0.1);
-  log.traverse((o) => {
+  log.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   ctree3.scale.setScalar(0.4);
-  ctree3.traverse((o) => {
+  ctree3.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
   ctree5.scale.setScalar(0.4);
-  ctree5.traverse((o) => {
+  ctree5.traverse((o: THREE.Object3D) => {
     o.castShadow = true;
     o.receiveShadow = true;
   });
 
-  const objects: JSX.Element[] = [];
+  const objects: React.JSX.Element[] = [];
 
   const createTrees = useMemo(() => {
     for (let i = 0; i < 100; i++) {
@@ -142,7 +142,7 @@ const Nature: React.FC = () => {
 
   return (
     <group>
-      {objects.map((obj: JSX.Element) => {
+      {objects.map((obj: React.JSX.Element) => {
         return obj;
       })}
     </group>

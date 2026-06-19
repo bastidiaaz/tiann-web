@@ -1,6 +1,6 @@
 import { useFrame, useLoader } from "@react-three/fiber";
 import React, { useCallback, useEffect, useRef } from "react";
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { useFBX } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -42,10 +42,10 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
   const acceleration = new THREE.Vector3(1, 0.125, 100.0);
   const velocity = new THREE.Vector3(0, 0, 0);
 
-  const c = useLoader(FBXLoader, "./character/character.fbx");
+  const c = useLoader(FBXLoader as any, "./character/character.fbx");
 
   c.scale.setScalar(0.1);
-  c.traverse((f) => {
+  c.traverse((f: THREE.Object3D) => {
     f.castShadow = true;
     f.receiveShadow = true;
   });
