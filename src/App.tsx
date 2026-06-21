@@ -1,10 +1,9 @@
 import { Suspense } from "react";
 import { Loader, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import Ground from "./components/Ground";
 import Character from "./components/Character";
 import * as THREE from "three";
-import Nature from "./components/Nature";
+import Planet from "./components/world/Planet";
 import SpaceSky from "./components/world/SpaceSky";
 
 const camera = new THREE.PerspectiveCamera(60, 1920 / 1080, 1.0, 1000.0);
@@ -46,9 +45,8 @@ function App() {
         <ambientLight intensity={1.0} />
         <OrbitControls />
         <Suspense fallback={null}>
-          <Ground />
+          <Planet />
           <Character camera={camera} />
-          <Nature />
         </Suspense>
         <SpaceSky />
       </Canvas>
