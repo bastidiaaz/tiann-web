@@ -14,7 +14,7 @@ const SpaceSky: React.FC = () => {
         speed={0.5}
       />
       {/* FogExp2 dissolves terrain edges into the dark sky, creating the small-planet illusion */}
-      <fogExp2 attach="fog" args={['#080010', 0.008]} />
+      <fogExp2 attach="fog" args={['#080010', 0.010]} />
     </>
   );
 };

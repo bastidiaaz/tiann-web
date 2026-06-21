@@ -10,6 +10,7 @@ const BackgroundPlanet: React.FC = () => {
         emissiveIntensity={0.3}
         roughness={0.8}
         metalness={0.0}
+        fog={false}
       />
     </mesh>
   );

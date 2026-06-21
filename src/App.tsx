@@ -39,7 +39,9 @@ function World() {
         <Canvas
           shadows={{ type: THREE.PCFShadowMap }}
           camera={camera}
-          onCreated={() => {
+          onCreated={({ gl }) => {
+            // Match clear color to fog so the renderer background blends seamlessly at terrain edges
+            gl.setClearColor(new THREE.Color('#080010'), 1);
             // Preserve pre-migration FBX colour behaviour (see original Character.tsx comment)
             THREE.ColorManagement.enabled = false;
           }}
