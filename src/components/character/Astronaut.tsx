@@ -23,30 +23,33 @@ const Astronaut: React.FC<AstronautProps> = ({ camera, activeSpotId, characterPo
     run: false, dance: false,
   });
 
-  const animations: Animations = {};
-  const currentPosition = new THREE.Vector3();
-  const currentLookAt = new THREE.Vector3();
-  const deceleration = new THREE.Vector3(-0.0005, -0.0001, -5.0);
-  const acceleration = new THREE.Vector3(1, 0.125, 100.0);
-  const velocity = new THREE.Vector3(0, 0, 0);
+  const velocity = useRef(new THREE.Vector3(0, 0, 0));
+  const deceleration = useRef(new THREE.Vector3(-0.0005, -0.0001, -5.0));
+  const acceleration = useRef(new THREE.Vector3(1, 0.125, 100.0));
+  const currentPosition = useRef(new THREE.Vector3());
+  const currentLookAt = useRef(new THREE.Vector3());
+  const animations = useRef<Animations>({});
+  const currAction = useRef<THREE.AnimationAction>(null!);
+  const prevAction = useRef<THREE.AnimationAction>(null!);
 
   const c = useLoader(FBXLoader as any, './character/character.fbx');
   c.scale.setScalar(0.1);
   c.traverse((f: THREE.Object3D) => { f.castShadow = true; f.receiveShadow = true; });
 
-  const mixer = new THREE.AnimationMixer(c);
+  const mixer = useRef(new THREE.AnimationMixer(c));
 
   const idle = useFBX('./character/idle.fbx');
-  animations['idle'] = { clip: mixer.clipAction(idle.animations[0]) };
+  animations.current['idle'] = { clip: mixer.current.clipAction(idle.animations[0]) };
   const walk = useFBX('./character/walking.fbx');
-  animations['walk'] = { clip: mixer.clipAction(walk.animations[0]) };
+  animations.current['walk'] = { clip: mixer.current.clipAction(walk.animations[0]) };
   const run = useFBX('./character/running.fbx');
-  animations['run'] = { clip: mixer.clipAction(run.animations[0]) };
+  animations.current['run'] = { clip: mixer.current.clipAction(run.animations[0]) };
   const dance = useFBX('./character/dance.fbx');
-  animations['dance'] = { clip: mixer.clipAction(dance.animations[0]) };
+  animations.current['dance'] = { clip: mixer.current.clipAction(dance.animations[0]) };
 
-  let currAction = animations['idle'].clip;
-  let prevAction: THREE.AnimationAction;
+  if (!currAction.current) {
+    currAction.current = animations.current['idle'].clip;
+  }
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     switch (e.keyCode) {
@@ -89,17 +92,17 @@ const Astronaut: React.FC<AstronautProps> = ({ camera, activeSpotId, characterPo
 
   const updateCamera = (delta: number) => {
     const t = 1.0 - Math.pow(0.001, delta);
-    currentPosition.lerp(calculateIdealOffset(), t);
-    currentLookAt.lerp(calculateIdealLookat(), t);
-    camera.position.copy(currentPosition);
+    currentPosition.current.lerp(calculateIdealOffset(), t);
+    currentLookAt.current.lerp(calculateIdealLookat(), t);
+    camera.position.copy(currentPosition.current);
   };
 
   const updateMovement = (delta: number) => {
-    const vel = velocity;
+    const vel = velocity.current;
     const frameDecel = new THREE.Vector3(
-      vel.x * deceleration.x,
-      vel.y * deceleration.y,
-      vel.z * deceleration.z,
+      vel.x * deceleration.current.x,
+      vel.y * deceleration.current.y,
+      vel.z * deceleration.current.z,
     );
     frameDecel.multiplyScalar(delta);
     frameDecel.z = Math.sign(frameDecel.z) * Math.min(Math.abs(frameDecel.z), Math.abs(vel.z));
@@ -109,21 +112,21 @@ const Astronaut: React.FC<AstronautProps> = ({ camera, activeSpotId, characterPo
     const _Q = new THREE.Quaternion();
     const _A = new THREE.Vector3();
     const _R = obj.quaternion.clone();
-    const acc = acceleration.clone();
+    const acc = acceleration.current.clone();
 
     if (activeKeys.current.run) acc.multiplyScalar(2.0);
-    if (currAction === animations['dance'].clip) acc.multiplyScalar(0.0);
+    if (currAction.current === animations.current['dance'].clip) acc.multiplyScalar(0.0);
 
     if (activeKeys.current.forward) vel.z += acc.z * delta;
     if (activeKeys.current.backward) vel.z -= acc.z * delta;
     if (activeKeys.current.left) {
       _A.set(0, 1, 0);
-      _Q.setFromAxisAngle(_A, 4.0 * Math.PI * delta * acceleration.y);
+      _Q.setFromAxisAngle(_A, 4.0 * Math.PI * delta * acceleration.current.y);
       _R.multiply(_Q);
     }
     if (activeKeys.current.right) {
       _A.set(0, 1, 0);
-      _Q.setFromAxisAngle(_A, 4.0 * -Math.PI * delta * acceleration.y);
+      _Q.setFromAxisAngle(_A, 4.0 * -Math.PI * delta * acceleration.current.y);
       _R.multiply(_Q);
     }
 
@@ -139,26 +142,26 @@ const Astronaut: React.FC<AstronautProps> = ({ camera, activeSpotId, characterPo
   };
 
   useFrame((state, delta) => {
-    prevAction = currAction;
+    prevAction.current = currAction.current;
 
     if (activeKeys.current.forward || activeKeys.current.backward ||
         activeKeys.current.left || activeKeys.current.right) {
-      currAction = activeKeys.current.run ? animations['run'].clip : animations['walk'].clip;
+      currAction.current = activeKeys.current.run ? animations.current['run'].clip : animations.current['walk'].clip;
     } else if (activeKeys.current.dance) {
-      currAction = animations['dance'].clip;
+      currAction.current = animations.current['dance'].clip;
     } else {
-      currAction = animations['idle'].clip;
+      currAction.current = animations.current['idle'].clip;
     }
 
-    if (prevAction !== currAction) {
-      prevAction.fadeOut(0.2);
-      if (prevAction === animations['walk'].clip) {
-        const ratio = currAction.getClip().duration / prevAction.getClip().duration;
-        currAction.time = prevAction.time * ratio;
+    if (prevAction.current !== currAction.current) {
+      prevAction.current.fadeOut(0.2);
+      if (prevAction.current === animations.current['walk'].clip) {
+        const ratio = currAction.current.getClip().duration / prevAction.current.getClip().duration;
+        currAction.current.time = prevAction.current.time * ratio;
       }
-      currAction.reset().play();
+      currAction.current.reset().play();
     } else {
-      currAction.play();
+      currAction.current.play();
     }
 
     updateMovement(delta);
@@ -168,11 +171,11 @@ const Astronaut: React.FC<AstronautProps> = ({ camera, activeSpotId, characterPo
 
     state.camera.lookAt(calculateIdealLookat());
     state.camera.updateProjectionMatrix();
-    mixer.update(delta);
+    mixer.current.update(delta);
   });
 
   // Separate effects: initial play vs listener lifecycle (avoids replaying on handler re-creation)
-  useEffect(() => { currAction.play(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { currAction.current.play(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
