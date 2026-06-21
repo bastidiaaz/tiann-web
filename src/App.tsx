@@ -1,7 +1,7 @@
-import { Suspense } from "react";
-import { Loader, OrbitControls } from "@react-three/drei";
+import { Suspense, useRef, useState } from "react";
+import { Loader } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import Character from "./components/Character";
+import Astronaut from "./components/character/Astronaut";
 import * as THREE from "three";
 import Planet from "./components/world/Planet";
 import SpaceSky from "./components/world/SpaceSky";
@@ -11,6 +11,9 @@ const camera = new THREE.PerspectiveCamera(60, 1920 / 1080, 1.0, 1000.0);
 camera.position.set(25, 10, 25);
 
 function App() {
+  const characterPositionRef = useRef(new THREE.Vector3());
+  const [activeSpotId, setActiveSpotId] = useState<number | null>(null);
+
   return (
     <div className="w-full h-screen bg-[#080010]">
       <Canvas
@@ -44,11 +47,14 @@ function App() {
           shadow-camera-bottom={-50}
         />
         <ambientLight intensity={1.0} />
-        <OrbitControls />
         <Suspense fallback={null}>
           <Planet />
           <BackgroundPlanet />
-          <Character camera={camera} />
+          <Astronaut
+            camera={camera}
+            activeSpotId={activeSpotId}
+            characterPositionRef={characterPositionRef}
+          />
         </Suspense>
         <SpaceSky />
       </Canvas>
