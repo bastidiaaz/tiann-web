@@ -28,33 +28,41 @@ export function SpotifyProvider({ children }: { children: ReactNode }) {
     async function load() {
       try {
         const tokenRes = await fetch('/api/spotify-token');
+        if (!tokenRes.ok) throw new Error(`Token fetch failed: ${tokenRes.status}`);
         const { access_token } = await tokenRes.json() as { access_token: string };
 
-        const results: Record<number, TrackData> = {};
-
-        await Promise.all(
+        const results = await Promise.all(
           SPOTS.map(async (spot) => {
-            const res = await fetch(`https://api.spotify.com/v1/tracks/${spot.trackId}`, {
-              headers: { Authorization: `Bearer ${access_token}` },
-            });
-            const data = await res.json() as {
-              name: string;
-              artists: { name: string }[];
-              preview_url: string | null;
-              external_urls: { spotify: string };
-            };
-            results[spot.id] = {
-              spotId: spot.id,
-              trackId: spot.trackId,
-              name: data.name,
-              artist: data.artists[0].name,
-              previewUrl: data.preview_url,
-              spotifyUrl: data.external_urls.spotify,
-            };
+            try {
+              const res = await fetch(`https://api.spotify.com/v1/tracks/${spot.trackId}`, {
+                headers: { Authorization: `Bearer ${access_token}` },
+              });
+              if (!res.ok) throw new Error(`Track ${spot.trackId} fetch failed: ${res.status}`);
+              const data = await res.json() as {
+                name: string;
+                artists: { name: string }[];
+                preview_url: string | null;
+                external_urls: { spotify: string };
+              };
+              return [spot.id, {
+                spotId: spot.id,
+                trackId: spot.trackId,
+                name: data.name,
+                artist: data.artists[0]?.name ?? 'Unknown Artist',
+                previewUrl: data.preview_url,
+                spotifyUrl: data.external_urls.spotify,
+              }] as const;
+            } catch {
+              return null;
+            }
           })
         );
 
-        setTracks(results);
+        const loaded: Record<number, TrackData> = {};
+        for (const entry of results) {
+          if (entry) loaded[entry[0]] = entry[1];
+        }
+        setTracks(loaded);
       } catch {
         // Network or API failure — crystals still glow, previews silently skipped
       } finally {
