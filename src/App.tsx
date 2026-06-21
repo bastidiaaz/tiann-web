@@ -6,6 +6,8 @@ import * as THREE from "three";
 import Planet from "./components/world/Planet";
 import SpaceSky from "./components/world/SpaceSky";
 import BackgroundPlanet from "./components/world/BackgroundPlanet";
+import CrystalSpot from "./components/spots/CrystalSpot";
+import { SPOTS } from "./components/spots/spots.config";
 
 const camera = new THREE.PerspectiveCamera(60, 1920 / 1080, 1.0, 1000.0);
 camera.position.set(25, 10, 25);
@@ -55,6 +57,17 @@ function App() {
             activeSpotId={activeSpotId}
             characterPositionRef={characterPositionRef}
           />
+          {SPOTS.map((spot) => (
+            <CrystalSpot
+              key={spot.id}
+              spotId={spot.id}
+              position={spot.position}
+              color={spot.color}
+              characterPositionRef={characterPositionRef}
+              activeSpotId={activeSpotId}
+              setActiveSpotId={setActiveSpotId}
+            />
+          ))}
         </Suspense>
         <SpaceSky />
       </Canvas>
