@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Loader, OrbitControls, SoftShadows } from "@react-three/drei";
+import { Loader, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import Ground from "./components/Ground";
 import Character from "./components/Character";
@@ -12,28 +12,27 @@ camera.position.set(25, 10, 25);
 function App() {
   return (
     <div className="w-full h-screen bg-fuchsia-100">
-      <Canvas shadows camera={camera}>
-        <SoftShadows />
+      <Canvas shadows={{ type: THREE.PCFShadowMap }} camera={camera}>
         <hemisphereLight
           color={new THREE.Color().setHSL(0.6, 1, 0.6)}
           groundColor={new THREE.Color().setHSL(0.095, 1, 0.75)}
-          intensity={0.6}
+          intensity={2.0}
         />
         <directionalLight
           position={[-100, 100, 100]}
-          intensity={1.0}
+          intensity={3.0}
           castShadow
           shadow-bias={-0.001}
           shadow-mapSize-width={4096}
           shadow-mapSize-height={4096}
           shadow-camera-near={0.5}
           shadow-camera-far={500.0}
-          shadow-camera-left={50}
-          shadow-camera-right={-50}
+          shadow-camera-left={-50}
+          shadow-camera-right={50}
           shadow-camera-top={50}
           shadow-camera-bottom={-50}
         />
-        <ambientLight intensity={0.1} />
+        <ambientLight intensity={1.0} />
         <OrbitControls />
         <Suspense fallback={null}>
           <Ground />
