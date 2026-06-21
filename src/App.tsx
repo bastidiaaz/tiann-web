@@ -5,6 +5,7 @@ import Character from "./components/Character";
 import * as THREE from "three";
 import Planet from "./components/world/Planet";
 import SpaceSky from "./components/world/SpaceSky";
+import BackgroundPlanet from "./components/world/BackgroundPlanet";
 
 const camera = new THREE.PerspectiveCamera(60, 1920 / 1080, 1.0, 1000.0);
 camera.position.set(25, 10, 25);
@@ -46,6 +47,7 @@ function App() {
         <OrbitControls />
         <Suspense fallback={null}>
           <Planet />
+          <BackgroundPlanet />
           <Character camera={camera} />
         </Suspense>
         <SpaceSky />
