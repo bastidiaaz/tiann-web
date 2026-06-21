@@ -1,0 +1,304 @@
+diff --git a/src/components/Character.tsx b/src/components/Character.tsx
+index f8ad404..08a1c2a 100644
+--- a/src/components/Character.tsx
++++ b/src/components/Character.tsx
+@@ -11,35 +11,28 @@ interface Animations {
+     clip: THREE.AnimationAction;
+   };
+ }
+ 
+ interface CharacterProps {
+   camera: THREE.PerspectiveCamera;
+ }
+ const Character: React.FC<CharacterProps> = ({ camera }) => {
+   const character = useRef<Mesh>(null!);
+ 
+-  const activeAnimation: {
+-    forward: boolean;
+-    backward: boolean;
+-    left: boolean;
+-    right: boolean;
+-    run: boolean;
+-    dance: boolean;
+-  } = {
++  const activeAnimation = useRef({
+     forward: false,
+     backward: false,
+     left: false,
+     right: false,
+     run: false,
+     dance: false,
+-  };
++  });
+ 
+   const animations: Animations = {};
+ 
+   const currentPosition = new THREE.Vector3();
+   const currentLookAt = new THREE.Vector3();
+   const decceleration = new THREE.Vector3(-0.0005, -0.0001, -5.0);
+   const acceleration = new THREE.Vector3(1, 0.125, 100.0);
+   const velocity = new THREE.Vector3(0, 0, 0);
+ 
+   const c = useLoader(FBXLoader as any, "./character/character.fbx");
+@@ -78,73 +71,73 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
+ 
+   // set current Action
+   let currAction = animations["idle"].clip;
+ 
+   let prevAction: THREE.AnimationAction;
+ 
+   // Controll Input
+   const handleKeyPress = useCallback((event: KeyboardEvent) => {
+     switch (event.keyCode) {
+       case 87: //w
+-        activeAnimation.forward = true;
++        activeAnimation.current.forward = true;
+ 
+         break;
+ 
+       case 65: //a
+-        activeAnimation.left = true;
++        activeAnimation.current.left = true;
+ 
+         break;
+ 
+       case 83: //s
+-        activeAnimation.backward = true;
++        activeAnimation.current.backward = true;
+ 
+         break;
+ 
+       case 68: // d
+-        activeAnimation.right = true;
++        activeAnimation.current.right = true;
+ 
+         break;
+ 
+       case 69: //e dance
+-        activeAnimation.dance = true;
++        activeAnimation.current.dance = true;
+ 
+         break;
+       case 16: // shift
+-        activeAnimation.run = true;
++        activeAnimation.current.run = true;
+         break;
+     }
+   }, []);
+ 
+   const handleKeyUp = useCallback((event: KeyboardEvent) => {
+     switch (event.keyCode) {
+       case 87: //w
+-        activeAnimation.forward = false;
++        activeAnimation.current.forward = false;
+         break;
+ 
+       case 65: //a
+-        activeAnimation.left = false;
++        activeAnimation.current.left = false;
+         break;
+ 
+       case 83: //s
+-        activeAnimation.backward = false;
++        activeAnimation.current.backward = false;
+         break;
+ 
+       case 68: // d
+-        activeAnimation.right = false;
++        activeAnimation.current.right = false;
+         break;
+ 
+       case 69: //e dance
+-        activeAnimation.dance = false;
++        activeAnimation.current.dance = false;
+         break;
+ 
+       case 16: // shift
+-        activeAnimation.run = false;
++        activeAnimation.current.run = false;
+         break;
+     }
+   }, []);
+ 
+   const calculateIdealOffset = () => {
+     const idealOffset = new THREE.Vector3(0, 20, -30);
+     idealOffset.applyQuaternion(character.current.quaternion);
+     idealOffset.add(character.current.position);
+     return idealOffset;
+   };
+@@ -182,40 +175,40 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
+       Math.min(Math.abs(frameDecceleration.z), Math.abs(newVelocity.z));
+ 
+     newVelocity.add(frameDecceleration);
+ 
+     const controlObject = character.current;
+     const _Q = new THREE.Quaternion();
+     const _A = new THREE.Vector3();
+     const _R = controlObject.quaternion.clone();
+ 
+     const acc = acceleration.clone();
+-    if (activeAnimation.run) {
++    if (activeAnimation.current.run) {
+       acc.multiplyScalar(2.0);
+     }
+ 
+     if (currAction === animations["dance"].clip) {
+       acc.multiplyScalar(0.0);
+     }
+ 
+-    if (activeAnimation.forward) {
++    if (activeAnimation.current.forward) {
+       newVelocity.z += acc.z * delta;
+     }
+-    if (activeAnimation.backward) {
++    if (activeAnimation.current.backward) {
+       newVelocity.z -= acc.z * delta;
+     }
+-    if (activeAnimation.left) {
++    if (activeAnimation.current.left) {
+       _A.set(0, 1, 0);
+       _Q.setFromAxisAngle(_A, 4.0 * Math.PI * delta * acceleration.y);
+       _R.multiply(_Q);
+     }
+-    if (activeAnimation.right) {
++    if (activeAnimation.current.right) {
+       _A.set(0, 1, 0);
+       _Q.setFromAxisAngle(_A, 4.0 * -Math.PI * delta * acceleration.y);
+       _R.multiply(_Q);
+     }
+ 
+     controlObject.quaternion.copy(_R);
+ 
+     const oldPosition = new THREE.Vector3();
+     oldPosition.copy(controlObject.position);
+ 
+@@ -233,45 +226,45 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
+     controlObject.position.add(forward);
+     controlObject.position.add(sideways);
+ 
+     character.current.position.copy(controlObject.position);
+     updateCameraTarget(delta);
+   };
+ 
+   useFrame((state, delta) => {
+     prevAction = currAction;
+ 
+-    if (activeAnimation.forward) {
+-      if (activeAnimation.run) {
++    if (activeAnimation.current.forward) {
++      if (activeAnimation.current.run) {
+         currAction = animations["run"].clip;
+       } else {
+         currAction = animations["walk"].clip;
+       }
+-    } else if (activeAnimation.left) {
+-      if (activeAnimation.run) {
++    } else if (activeAnimation.current.left) {
++      if (activeAnimation.current.run) {
+         currAction = animations["run"].clip;
+       } else {
+         currAction = animations["walk"].clip;
+       }
+-    } else if (activeAnimation.right) {
+-      if (activeAnimation.run) {
++    } else if (activeAnimation.current.right) {
++      if (activeAnimation.current.run) {
+         currAction = animations["run"].clip;
+       } else {
+         currAction = animations["walk"].clip;
+       }
+-    } else if (activeAnimation.backward) {
+-      if (activeAnimation.run) {
++    } else if (activeAnimation.current.backward) {
++      if (activeAnimation.current.run) {
+         currAction = animations["run"].clip;
+       } else {
+         currAction = animations["walk"].clip;
+       }
+-    } else if (activeAnimation.dance) {
++    } else if (activeAnimation.current.dance) {
+       currAction = animations["dance"].clip;
+     } else {
+       currAction = animations["idle"].clip;
+     }
+ 
+     if (prevAction !== currAction) {
+       prevAction.fadeOut(0.2);
+ 
+       if (prevAction === animations["walk"].clip) {
+         const ratio =
+@@ -295,16 +288,16 @@ const Character: React.FC<CharacterProps> = ({ camera }) => {
+   useEffect(() => {
+     document.addEventListener("keydown", handleKeyPress);
+ 
+     document.addEventListener("keyup", handleKeyUp);
+     currAction.play();
+     return () => {
+       document.removeEventListener("keydown", handleKeyPress);
+ 
+       document.removeEventListener("keyup", handleKeyUp);
+     };
+-  });
++  }, []);
+ 
+   return <primitive object={c} ref={character} />;
+ };
+ 
+ export default Character;
+diff --git a/src/components/Nature.tsx b/src/components/Nature.tsx
+index 2dcdd88..1474a11 100644
+--- a/src/components/Nature.tsx
++++ b/src/components/Nature.tsx
+@@ -86,23 +86,22 @@ const Nature: React.FC = () => {
+   ctree3.traverse((o: THREE.Object3D) => {
+     o.castShadow = true;
+     o.receiveShadow = true;
+   });
+   ctree5.scale.setScalar(0.4);
+   ctree5.traverse((o: THREE.Object3D) => {
+     o.castShadow = true;
+     o.receiveShadow = true;
+   });
+ 
+-  const objects: React.JSX.Element[] = [];
+-
+-  const createTrees = useMemo(() => {
++  const objects = useMemo(() => {
++    const items: React.JSX.Element[] = [];
+     for (let i = 0; i < 100; i++) {
+       const idx: number = Math.floor(Math.random() * 11) + 1;
+       const pos = new THREE.Vector3(
+         Math.ceil(Math.random() * 450) * (Math.round(Math.random()) ? 1 : -1),
+         0,
+         Math.ceil(Math.random() * 450) * (Math.round(Math.random()) ? 1 : -1)
+       );
+ 
+       const obj = (
+         <primitive
+@@ -129,23 +128,24 @@ const Nature: React.FC = () => {
+               ? rock5.clone()
+               : idx === 10
+               ? willow2.clone()
+               : idx === 11
+               ? willow5.clone()
+               : log.clone()
+           }
+         />
+       );
+ 
+-      objects.push(obj);
++      items.push(obj);
+     }
+-  }, []);
++    return items;
++  }, [birch3, birch4, berry1, ctree3, ctree5, grass2, grass, rock1, rock5, willow2, willow5, log]);
+ 
+   return (
+     <group>
+       {objects.map((obj: React.JSX.Element) => {
+         return obj;
+       })}
+     </group>
+   );
+ };
+ 
