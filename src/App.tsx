@@ -12,7 +12,17 @@ camera.position.set(25, 10, 25);
 function App() {
   return (
     <div className="w-full h-screen bg-fuchsia-100">
-      <Canvas shadows={{ type: THREE.PCFShadowMap }} camera={camera}>
+      <Canvas
+        shadows={{ type: THREE.PCFShadowMap }}
+        camera={camera}
+        onCreated={() => {
+          // R3F v9 sets ColorManagement.enabled=true during Canvas setup, overriding any
+          // module-level disable. Setting it here (after R3F init, before FBX loading
+          // resolves) restores the pre-migration behavior where FBX sRGB colors are
+          // used as-is in the shader rather than being linearized, matching the original look.
+          THREE.ColorManagement.enabled = false;
+        }}
+      >
         <hemisphereLight
           color={new THREE.Color().setHSL(0.6, 1, 0.6)}
           groundColor={new THREE.Color().setHSL(0.095, 1, 0.75)}
