@@ -1,173 +1,101 @@
-# Task 1: Replace CRA with Vite
+### Task 1: Dev Infrastructure
 
-## Context
-This is a React + Three.js 3D world project (4 source files). You are performing the first step of a 5-layer tooling upgrade. This task replaces Create React App (react-scripts) with Vite.
+**Files:**
+- Modify: `vite.config.ts`
+- Modify: `package.json`
+- Create: `src/test-setup.ts`
+- Create: `vercel.json`
+- Create: `.env.local` (gitignored, never committed)
 
-## Working directory
-`C:\Users\bastian.diaz\Work\personal\tiann-web\.claude\worktrees\tooling-upgrade`
+**Interfaces:**
+- Produces: `npm test` runs Vitest; `vercel dev` serves Vite + `/api/*` serverless routes locally
 
-## Global Constraints
-- Package manager is npm — do not use yarn
-- Tailwind CSS stays on v3 — do NOT upgrade to v4
-- No new components, abstractions, or features beyond what is described below
+- [ ] **Step 1: Install dev dependencies**
 
-## Note on npm install
-The current CRA setup has peer dep conflicts that require `--legacy-peer-deps`. After removing `react-scripts` in this task, this flag should no longer be needed for normal installs. Use `--legacy-peer-deps` only if a plain `npm install` fails during this task.
+```bash
+npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom @vercel/node
+```
 
-## Files
+Expected: packages install without errors.
 
-**Create:**
-- `vite.config.ts`
-- `tsconfig.node.json`
-- `index.html` (project root — NOT inside `public/`)
+- [ ] **Step 2: Update vite.config.ts**
 
-**Modify:**
-- `package.json` — replace scripts, remove react-scripts, add vite deps
-- `tsconfig.json` — update for Vite module resolution
-- `src/index.tsx` — update to React 19 createRoot API
-
-**Delete:**
-- `public/index.html`
-- `src/react-app-env.d.ts`
-- `src/reportWebVitals.ts`
-- `src/setupTests.ts`
-- `yarn.lock`
-
-## Exact content for each file
-
-### `vite.config.ts`
 ```typescript
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test-setup.ts'],
+  },
 })
 ```
 
-### `tsconfig.node.json`
+- [ ] **Step 3: Create src/test-setup.ts**
+
+```typescript
+import '@testing-library/jest-dom';
+```
+
+- [ ] **Step 4: Add test scripts to package.json**
+
+In `package.json`, add to `"scripts"`:
+```json
+"test": "vitest run",
+"test:watch": "vitest"
+```
+
+- [ ] **Step 5: Create vercel.json**
+
 ```json
 {
-  "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["vite.config.ts"]
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
 }
 ```
 
-### `index.html` (project root)
-Vite's entry HTML lives at the project root. Static assets in `public/` are served as-is — no `%PUBLIC_URL%` prefixes needed.
+- [ ] **Step 6: Create .env.local (never commit)**
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="3D world with character" />
-    <link rel="apple-touch-icon" href="/logo192.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>Three.js World</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <script type="module" src="/src/index.tsx"></script>
-  </body>
-</html>
+Create `.env.local` at project root:
+```
+SPOTIFY_CLIENT_ID=your_spotify_client_id_here
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret_here
 ```
 
-### `tsconfig.json` (full replacement)
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "strict": true,
-    "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
-}
+Get credentials: https://developer.spotify.com/dashboard → create an app → copy Client ID and Secret.
+
+- [ ] **Step 7: Ensure .env.local is gitignored**
+
+Open `.gitignore`. If these lines are missing, add them:
+```
+.env
+.env.local
 ```
 
-### `package.json` scripts (replace the scripts block)
-```json
-"scripts": {
-  "dev": "vite",
-  "build": "tsc && vite build",
-  "preview": "vite preview"
-}
+- [ ] **Step 8: Install Vercel CLI if not present**
+
+```bash
+npm install -g vercel
 ```
 
-Also:
-- Run `npm uninstall react-scripts`
-- Run `npm install --save-dev vite @vitejs/plugin-react`
+- [ ] **Step 9: Verify Vitest config works**
 
-### `src/index.tsx` (full replacement)
-The old `ReactDOM.render()` API is removed in React 19. Replace the entire file:
-
-```tsx
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App";
-
-const root = createRoot(document.getElementById("root")!);
-root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);
+```bash
+npm test
 ```
 
-## Steps
+Expected: `No test files found, exiting with code 0` or similar. No errors.
 
-1. Run `npm uninstall react-scripts`
-2. Run `npm install --save-dev vite @vitejs/plugin-react`
-3. Create `vite.config.ts` with content above
-4. Create `tsconfig.node.json` with content above
-5. Replace `tsconfig.json` with content above
-6. Create `index.html` at project root with content above
-7. Replace scripts block in `package.json` as shown above
-8. Replace `src/index.tsx` with content above
-9. Delete: `public/index.html`, `src/react-app-env.d.ts`, `src/reportWebVitals.ts`, `src/setupTests.ts`, `yarn.lock`
-10. Run `npm run dev` — verify Vite starts and the 3D scene loads in a browser (or at minimum the dev server starts without errors)
-11. Run `npx tsc --noEmit` — verify no type errors
-12. Commit all changes: `git add -A && git commit -m "chore: replace CRA with Vite"`
+- [ ] **Step 10: Commit**
 
-## Verification
-- `npm run dev` starts successfully (Vite dev server at localhost:5173)
-- `npx tsc --noEmit` passes with no errors
-- The 3D world loads in browser with character visible
+```bash
+git add vite.config.ts src/test-setup.ts vercel.json package.json package-lock.json .gitignore
+git commit -m "chore: add vitest, testing-library, vercel config"
+```
 
-## Report
-Write your full report to: `C:\Users\bastian.diaz\Work\personal\tiann-web\.superpowers\sdd\task-1-report.md`
+---
 
-Include:
-- What you did (files created/modified/deleted)
-- Any deviations from the brief and why
-- Output of `npx tsc --noEmit`
-- Whether `npm run dev` started successfully
-- Your self-review findings
-- Any concerns
-
-Return: status (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED), commit hash, one-line test summary.

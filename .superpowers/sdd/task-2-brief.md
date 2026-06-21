@@ -1,51 +1,119 @@
-# Task 2: Upgrade React 19 and TypeScript 5
+### Task 2: Spots Config
 
-## Context
-This is Task 2 of 5 in a tooling upgrade for a React + Three.js 3D world project. Task 1 already replaced CRA with Vite (complete). This task upgrades React to v19 and TypeScript (TypeScript was already upgraded to 6.0.3 in Task 1 — see note below).
+**Files:**
+- Create: `src/components/spots/spots.config.ts`
+- Create: `src/components/spots/spots.config.test.ts`
 
-## Working directory
-`C:\Users\bastian.diaz\Work\personal\tiann-web\.claude\worktrees\tooling-upgrade`
+**Interfaces:**
+- Produces:
+  - `SpotConfig: { id: number; trackId: string; position: [number, number, number]; color: string }`
+  - `SPOTS: SpotConfig[]` — 6 entries
+  - `PROXIMITY_ENTER: number` (18)
+  - `PROXIMITY_EXIT: number` (22)
 
-## Global Constraints
-- Package manager is npm — use `--legacy-peer-deps` if plain install fails (pre-existing peer dep conflicts from @react-spring transitive deps)
-- Tailwind CSS stays on v3 — do NOT touch it
-- No new components, abstractions, or features
+- [ ] **Step 1: Write the failing test**
 
-## Important note on TypeScript
-Task 1 already upgraded TypeScript to 6.0.3 (latest). The plan originally said "upgrade to TypeScript 5" but 6.x is what `npm install typescript@latest` installs. TypeScript is already at 6.0.3 — do NOT downgrade it. No TypeScript version change is needed in this task.
+Create `src/components/spots/spots.config.test.ts`:
 
-## What to do
+```typescript
+import { describe, it, expect } from 'vitest';
+import { SPOTS, PROXIMITY_ENTER, PROXIMITY_EXIT, type SpotConfig } from './spots.config';
 
-Run:
-```bash
-npm install react@latest react-dom@latest
-npm install --save-dev @types/react@latest @types/react-dom@latest
+describe('spots.config', () => {
+  it('exports exactly 6 spots', () => {
+    expect(SPOTS).toHaveLength(6);
+  });
+
+  it('each spot has required fields with correct types', () => {
+    SPOTS.forEach((spot: SpotConfig) => {
+      expect(typeof spot.id).toBe('number');
+      expect(typeof spot.trackId).toBe('string');
+      expect(spot.trackId.length).toBeGreaterThan(0);
+      expect(spot.position).toHaveLength(3);
+      spot.position.forEach((v) => expect(typeof v).toBe('number'));
+      expect(spot.color).toMatch(/^#[0-9a-fA-F]{6}$/);
+    });
+  });
+
+  it('exit threshold is greater than enter threshold', () => {
+    expect(PROXIMITY_EXIT).toBeGreaterThan(PROXIMITY_ENTER);
+  });
+
+  it('all spots are within 130 units of origin', () => {
+    SPOTS.forEach((spot) => {
+      const [x, , z] = spot.position;
+      const dist = Math.sqrt(x ** 2 + z ** 2);
+      expect(dist).toBeLessThanOrEqual(130);
+    });
+  });
+
+  it('all spots are far enough apart to prevent simultaneous activation', () => {
+    const minDist = PROXIMITY_EXIT * 2;
+    for (let i = 0; i < SPOTS.length; i++) {
+      for (let j = i + 1; j < SPOTS.length; j++) {
+        const [x1, , z1] = SPOTS[i].position;
+        const [x2, , z2] = SPOTS[j].position;
+        const dist = Math.sqrt((x2 - x1) ** 2 + (z2 - z1) ** 2);
+        expect(dist).toBeGreaterThan(minDist);
+      }
+    }
+  });
+});
 ```
 
-If plain install fails due to peer conflicts, add `--legacy-peer-deps`.
+- [ ] **Step 2: Run test — confirm it fails**
 
-## Verification
+```bash
+npm test
+```
 
-1. Check installed React version: `npm ls react` — confirm v19.x
-2. Run `npx tsc --noEmit` — must pass with zero errors
-3. Run `npm run dev` — Vite dev server must start cleanly
+Expected: FAIL — `Cannot find module './spots.config'`
 
-## Steps
+- [ ] **Step 3: Create spots.config.ts**
 
-1. Run `npm install react@latest react-dom@latest` (add `--legacy-peer-deps` if needed)
-2. Run `npm install --save-dev @types/react@latest @types/react-dom@latest` (add `--legacy-peer-deps` if needed)
-3. Run `npm ls react` — confirm v19.x installed
-4. Run `npx tsc --noEmit` — confirm zero errors
-5. Run `npm run dev` — confirm server starts
-6. Commit: `git add package.json package-lock.json && git commit -m "chore: upgrade React to 19"`
+```typescript
+export interface SpotConfig {
+  id: number;
+  trackId: string;
+  position: [number, number, number];
+  color: string;
+}
 
-## Report
-Write your full report to: `C:\Users\bastian.diaz\Work\personal\tiann-web\.superpowers\sdd\task-2-report.md`
+// Replace each trackId with your actual Spotify track IDs.
+// To find a track ID: open the song on Spotify → right-click → Share → Copy link
+// The ID is the part after /track/ in the URL.
+// Example: https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC → ID is "4uLU6hMCjMI75M1A2tKUQC"
+export const SPOTS: SpotConfig[] = [
+  { id: 1, trackId: 'REPLACE_ME_1', position: [80,   0,  30],  color: '#ffaa33' },
+  { id: 2, trackId: 'REPLACE_ME_2', position: [-60,  0,  90],  color: '#ff6b8a' },
+  { id: 3, trackId: 'REPLACE_ME_3', position: [-100, 0, -20],  color: '#9b6bff' },
+  { id: 4, trackId: 'REPLACE_ME_4', position: [-40,  0, -100], color: '#ff7f5c' },
+  { id: 5, trackId: 'REPLACE_ME_5', position: [50,   0, -110], color: '#4ecdc4' },
+  { id: 6, trackId: 'REPLACE_ME_6', position: [110,  0, -50],  color: '#fff5e0' },
+];
 
-Include:
-- Installed React version (from `npm ls react`)
-- Output of `npx tsc --noEmit`
-- Whether `npm run dev` started successfully
-- Any deviations or concerns
+export const PROXIMITY_ENTER = 18;
+export const PROXIMITY_EXIT = 22;
+```
 
-Return: status (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED), commit hash, one-line verification summary.
+- [ ] **Step 4: Run tests — confirm they pass**
+
+```bash
+npm test
+```
+
+Expected: 5 tests pass. (The `trackId.length > 0` test will pass because `'REPLACE_ME_1'` is non-empty — that's correct; you'll fill in real IDs in the next step.)
+
+- [ ] **Step 5: Fill in your 6 Spotify track IDs**
+
+Replace each `'REPLACE_ME_N'` in `SPOTS` with a real Spotify track ID. Run `npm test` again after filling them in to confirm all tests still pass.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/components/spots/
+git commit -m "feat: add spots config with 6 crystal positions and colors"
+```
+
+---
+

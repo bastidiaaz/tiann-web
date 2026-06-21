@@ -1,96 +1,203 @@
-# Task 4: Upgrade simplex-noise to v4 — Fix Ground.tsx API
+### Task 4: Spotify Data Layer
 
-## Context
-Task 4 of 5 in a React + Three.js tooling upgrade. Tasks 1–3 are complete (Vite, React 19, Three.js/R3F/Drei all upgraded). This task upgrades simplex-noise from v3 to v4 and updates Ground.tsx to use the new functional API.
+**Files:**
+- Create: `src/context/SpotifyContext.tsx`
+- Create: `src/hooks/useSpotify.ts`
+- Create: `src/context/SpotifyContext.test.tsx`
 
-## Working directory
-`C:\Users\bastian.diaz\Work\personal\tiann-web\.claude\worktrees\tooling-upgrade`
+**Interfaces:**
+- Consumes: `SPOTS` from `spots.config.ts`; `/api/spotify-token` endpoint
+- Produces:
+  - `TrackData: { spotId: number; trackId: string; name: string; artist: string; previewUrl: string | null; spotifyUrl: string }`
+  - `SpotifyContext` (exported React context — needed for test wrappers)
+  - `SpotifyProvider({ children })` — wraps app, fetches all track data on mount
+  - `useSpotifyContext(): { tracks: Record<number, TrackData>; loading: boolean }`
+  - `useSpotify()` — re-export alias of `useSpotifyContext`
 
-## Global Constraints
-- Package manager is npm — use `--legacy-peer-deps` if plain install fails
-- Tailwind CSS stays on v3 — do NOT touch it
-- No new features or components
+- [ ] **Step 1: Write the failing tests**
 
-## What changed in simplex-noise v4
-simplex-noise v4 dropped the class-based API entirely. There is no longer a default export. Instead it exports factory functions.
+Create `src/context/SpotifyContext.test.tsx`:
 
-| v3 | v4 |
-|----|-----|
-| `import SimplexNoise from 'simplex-noise'` | `import { createNoise2D } from 'simplex-noise'` |
-| `new SimplexNoise()` | `createNoise2D()` — returns a function directly |
-| `simplex.noise2D(x, y)` | `noise2D(x, y)` — call the returned function directly |
+```typescript
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { ReactNode } from 'react';
+import { SpotifyProvider, useSpotifyContext } from './SpotifyContext';
 
-## Package change
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <SpotifyProvider>{children}</SpotifyProvider>
+);
+
+const mockTrack = {
+  name: 'Test Song',
+  artists: [{ name: 'Test Artist' }],
+  preview_url: 'https://cdn.spotify.com/preview.mp3',
+  external_urls: { spotify: 'https://open.spotify.com/track/abc' },
+};
+
+function stubFetch(trackOverride?: object) {
+  const track = { ...mockTrack, ...trackOverride };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }) })
+      .mockResolvedValue({ ok: true, json: async () => track })
+  );
+}
+
+describe('SpotifyContext', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('starts in loading state', () => {
+    stubFetch();
+    const { result } = renderHook(() => useSpotifyContext(), { wrapper });
+    expect(result.current.loading).toBe(true);
+  });
+
+  it('populates all 6 tracks after load', async () => {
+    stubFetch();
+    const { result } = renderHook(() => useSpotifyContext(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(Object.keys(result.current.tracks)).toHaveLength(6);
+  });
+
+  it('maps track fields correctly', async () => {
+    stubFetch();
+    const { result } = renderHook(() => useSpotifyContext(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.tracks[1]).toMatchObject({
+      name: 'Test Song',
+      artist: 'Test Artist',
+      previewUrl: 'https://cdn.spotify.com/preview.mp3',
+      spotifyUrl: 'https://open.spotify.com/track/abc',
+    });
+  });
+
+  it('maps null preview_url correctly', async () => {
+    stubFetch({ preview_url: null });
+    const { result } = renderHook(() => useSpotifyContext(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.tracks[1].previewUrl).toBeNull();
+  });
+
+  it('finishes loading with empty tracks on network failure', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network error')));
+    const { result } = renderHook(() => useSpotifyContext(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.tracks).toEqual({});
+  });
+});
+```
+
+- [ ] **Step 2: Run test — confirm it fails**
 
 ```bash
-npm install simplex-noise@latest
+npm test
 ```
 
-Use `--legacy-peer-deps` if needed. Confirm v4.x: `npm ls simplex-noise`.
+Expected: FAIL — `Cannot find module './SpotifyContext'`
 
-## Source file change — `src/components/Ground.tsx`
+- [ ] **Step 3: Create SpotifyContext.tsx**
 
-### Import
-Find:
-```tsx
-import SimplexNoise from "simplex-noise";
+```typescript
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { SPOTS } from '../components/spots/spots.config';
+
+export interface TrackData {
+  spotId: number;
+  trackId: string;
+  name: string;
+  artist: string;
+  previewUrl: string | null;
+  spotifyUrl: string;
+}
+
+interface SpotifyContextValue {
+  tracks: Record<number, TrackData>;
+  loading: boolean;
+}
+
+export const SpotifyContext = createContext<SpotifyContextValue>({
+  tracks: {},
+  loading: true,
+});
+
+export function SpotifyProvider({ children }: { children: ReactNode }) {
+  const [tracks, setTracks] = useState<Record<number, TrackData>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const tokenRes = await fetch('/api/spotify-token');
+        const { access_token } = await tokenRes.json() as { access_token: string };
+
+        const results: Record<number, TrackData> = {};
+
+        await Promise.all(
+          SPOTS.map(async (spot) => {
+            const res = await fetch(`https://api.spotify.com/v1/tracks/${spot.trackId}`, {
+              headers: { Authorization: `Bearer ${access_token}` },
+            });
+            const data = await res.json() as {
+              name: string;
+              artists: { name: string }[];
+              preview_url: string | null;
+              external_urls: { spotify: string };
+            };
+            results[spot.id] = {
+              spotId: spot.id,
+              trackId: spot.trackId,
+              name: data.name,
+              artist: data.artists[0].name,
+              previewUrl: data.preview_url,
+              spotifyUrl: data.external_urls.spotify,
+            };
+          })
+        );
+
+        setTracks(results);
+      } catch {
+        // Network or API failure — crystals still glow, previews silently skipped
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  return (
+    <SpotifyContext.Provider value={{ tracks, loading }}>
+      {children}
+    </SpotifyContext.Provider>
+  );
+}
+
+export function useSpotifyContext() {
+  return useContext(SpotifyContext);
+}
 ```
-Replace with:
-```tsx
-import { createNoise2D } from "simplex-noise";
+
+- [ ] **Step 4: Create src/hooks/useSpotify.ts**
+
+```typescript
+export { useSpotifyContext as useSpotify } from '../context/SpotifyContext';
 ```
 
-### useMemo
-Find:
-```tsx
-const simplex = useMemo(() => new SimplexNoise(), []);
-```
-Replace with:
-```tsx
-const noise2D = useMemo(() => createNoise2D(), []);
+- [ ] **Step 5: Run tests — confirm they pass**
+
+```bash
+npm test
 ```
 
-### All noise calls inside `useLayoutEffect`
-There are 5 calls to `simplex.noise2D(...)` inside the nested for-loops. Replace each with `noise2D(...)` (same arguments, just call the function directly).
+Expected: 5 SpotifyContext tests + 5 spots.config tests = 10 passing. No failures.
 
-Find:
-```tsx
-(simplex.noise2D(i / 100, j / 100) +
-  simplex.noise2D((i + 200) / 50, j / 50) * Math.pow(ex, 1) +
-  simplex.noise2D((i + 400) / 25, j / 25) * Math.pow(ex, 2) +
-  simplex.noise2D((i + 600) / 12.5, j / 12.5) * Math.pow(ex, 3) +
-  +(simplex.noise2D((i + 800) / 6.25, j / 6.25) * Math.pow(ex, 4)))
-```
-Replace with:
-```tsx
-(noise2D(i / 100, j / 100) +
-  noise2D((i + 200) / 50, j / 50) * Math.pow(ex, 1) +
-  noise2D((i + 400) / 25, j / 25) * Math.pow(ex, 2) +
-  noise2D((i + 600) / 12.5, j / 12.5) * Math.pow(ex, 3) +
-  +(noise2D((i + 800) / 6.25, j / 6.25) * Math.pow(ex, 4)))
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/context/ src/hooks/
+git commit -m "feat: add Spotify context and track data hook"
 ```
 
-## Steps
+---
 
-1. `npm install simplex-noise@latest` (add `--legacy-peer-deps` if needed)
-2. Confirm `npm ls simplex-noise` → v4.x
-3. Update `src/components/Ground.tsx` as described above (import, useMemo, 5 noise calls)
-4. Run `npx tsc --noEmit` — must pass with zero errors
-5. Run `npm run dev` — confirm Vite starts; the terrain must be bumpy/varied, NOT flat (flat terrain = noise calls returning 0, meaning API mismatch)
-6. Commit: `git add package.json package-lock.json src/components/Ground.tsx && git commit -m "chore: upgrade simplex-noise to v4, update to functional API"`
-
-## Verification
-- `npm ls simplex-noise` → v4.x
-- `npx tsc --noEmit` → zero errors
-- `npm run dev` starts AND terrain is visually bumpy (not flat)
-
-## Report
-Write your full report to: `C:\Users\bastian.diaz\Work\personal\tiann-web\.superpowers\sdd\task-4-report.md`
-
-Include:
-- Installed simplex-noise version
-- Output of `npx tsc --noEmit`
-- Whether `npm run dev` started and terrain appeared bumpy
-- Any deviations
-
-Return: status (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED), commit hash, one-line verification summary.

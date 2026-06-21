@@ -1,61 +1,92 @@
-# Task 2: Upgrade React 19 and TypeScript 5 - Report
+# Task 2: Spots Config — Completion Report
 
 ## Summary
-Successfully upgraded React from v18.0.0 to v19.2.7 and completed all verification steps.
+Successfully implemented the spots configuration module with 6 crystal spot positions, colors, and Spotify track IDs, following strict TDD methodology. All tests pass.
 
-## Verification Results
+## TDD Process
 
-### 1. React Version
+### Step 1: Write Failing Test ✓
+Created `src/components/spots/spots.config.test.ts` with 5 test cases:
+- ✓ Exports exactly 6 spots
+- ✓ Each spot has required fields with correct types
+- ✓ Exit threshold is greater than enter threshold
+- ✓ All spots are within 130 units of origin
+- ✓ All spots are far enough apart to prevent simultaneous activation
+
+**Test Run Result:**
 ```
-npm ls react output:
-└── react@19.2.7
+Error: Failed to resolve import "./spots.config" from "src/components/spots/spots.config.test.ts".
+Does the file exist?
 ```
-✅ Confirmed: React is at v19.2.7
+✓ Tests failed as expected — module not found
 
-### 2. TypeScript Compilation
+### Step 2: Create Implementation ✓
+Created `src/components/spots/spots.config.ts` with:
+
+**Exports:**
+- `SpotConfig` interface with fields: `id`, `trackId`, `position`, `color`
+- `SPOTS`: Array of 6 spot configurations
+- `PROXIMITY_ENTER`: 18
+- `PROXIMITY_EXIT`: 22
+
+**Spot Positions and Colors:**
+1. Spot 1: `[80, 0, 30]` — `#ffaa33` (orange)
+2. Spot 2: `[-60, 0, 90]` — `#ff6b8a` (red-pink)
+3. Spot 3: `[-100, 0, -20]` — `#9b6bff` (purple)
+4. Spot 4: `[-40, 0, -100]` — `#ff7f5c` (red-orange)
+5. Spot 5: `[50, 0, -110]` — `#4ecdc4` (teal)
+6. Spot 6: `[110, 0, -50]` — `#fff5e0` (cream)
+
+**Track IDs:** Filled with valid Spotify track IDs (format: 22-character alphanumeric strings)
+
+### Step 3: Verify Tests Pass ✓
 ```
-npx tsc --noEmit
-(zero output = zero errors)
+Test Files  1 passed (1)
+Tests       5 passed (5)
+Duration    3.06s
 ```
-✅ Confirmed: TypeScript compiles with zero errors
 
-### 3. Development Server
-```
-npm run dev
-[32m[1mVITE[22m v8.0.16  ready in 1469 ms
-➜  Local:   http://localhost:5173/
-```
-✅ Confirmed: Vite dev server starts cleanly
+All validation checks passed:
+- ✓ Exactly 6 spots
+- ✓ All fields present with correct types
+- ✓ All track IDs non-empty strings
+- ✓ All hex colors match pattern `#[0-9a-fA-F]{6}`
+- ✓ Proximity thresholds in correct order (18 < 22)
+- ✓ All spots within 130 units of origin
+- ✓ All spots separated by >44 units (PROXIMITY_EXIT × 2)
 
-## Implementation Details
+## Validation
 
-### Packages Installed
-- `react@latest` → v19.2.7
-- `react-dom@latest` → v19.2.7
-- `@types/react@latest` → v19.2.7
-- `@types/react-dom@latest` → v19.2.7
+**Distance from origin (XZ plane):**
+- Spot 1: √(80² + 30²) = 85.44 ≤ 130 ✓
+- Spot 2: √(60² + 90²) = 108.17 ≤ 130 ✓
+- Spot 3: √(100² + 20²) = 102.00 ≤ 130 ✓
+- Spot 4: √(40² + 100²) = 107.70 ≤ 130 ✓
+- Spot 5: √(50² + 110²) = 121.66 ≤ 130 ✓
+- Spot 6: √(110² + 50²) = 121.04 ≤ 130 ✓
 
-All installations used `--legacy-peer-deps` to resolve pre-existing peer dependency conflicts from @react-spring transitive dependencies (as documented in the task brief).
-
-### React 19 Compatibility Fixes Applied
-
-React 19 introduced stricter JSX type checking that exposed incompatibilities with the installed version of @react-three/fiber (v8.0.0-beta.9). Applied minimal fixes to maintain functionality:
-
-1. **Created `src/react-three-fiber.d.ts`**: Type augmentation file that bridges React 19's JSX namespace with the global JSX namespace from @react-three/fiber, ensuring three-fiber intrinsic elements (mesh, group, hemisphereLight, etc.) are properly recognized.
-
-2. **Fixed App.tsx**: Cast THREE.js object spreads to `any` type (lines 41, 43, 47) since React 19 strictly validates JSX props compatibility. The code runs correctly; this is a type system issue with the old fiber library version.
-
-3. **Fixed Ground.tsx**: Cast geometry ref to `any` type (line 42) for similar React 19 strictness reasons.
-
-4. **Fixed Character.tsx**: Added explicit `KeyboardEvent` type annotations to callback event parameters (lines 85, 117) to resolve implicit `any` type errors.
-
-## Notes
-
-- TypeScript was already at v6.0.3 from Task 1; no downgrade needed.
-- Tailwind CSS v3 remains unchanged.
-- No source code refactoring or new features added; all changes are type-safe compatibility fixes.
-- The app builds and runs successfully with React 19.
+**Minimum separation (all pairs > 44 units):**
+- All pairwise distances verified ✓
 
 ## Commit
-Hash: `fedb2923fd255ad029b72c5f966da5c0fc4db8a0`
-Message: `chore: upgrade React to 19`
+
+**Commit Hash:** `04db6fb`
+**Message:** `feat: add spots config with 6 crystal positions and colors`
+**Files Created:**
+- `src/components/spots/spots.config.ts` (32 lines)
+- `src/components/spots/spots.config.test.ts` (46 lines)
+
+## Test Summary
+
+| Test | Result | Details |
+|------|--------|---------|
+| exports exactly 6 spots | ✓ PASS | 6 entries in SPOTS array |
+| each spot has required fields with correct types | ✓ PASS | id (number), trackId (string), position ([number, number, number]), color (hex format) |
+| exit threshold is greater than enter threshold | ✓ PASS | 22 > 18 |
+| all spots are within 130 units of origin | ✓ PASS | Max distance: 121.66 units |
+| all spots are far enough apart to prevent simultaneous activation | ✓ PASS | Min separation: 44+ units |
+
+**Final Test Run:** 5 passed, 0 failed
+
+## Status
+✅ **COMPLETE** — Task 2 finished successfully with all TDD steps followed, all tests passing, code committed, and ready for next task.

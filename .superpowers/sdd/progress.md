@@ -1,26 +1,20 @@
-# SDD Progress Ledger — tooling-upgrade
+# SDD Progress Ledger — music-portfolio-planet
 
-Branch: worktree-tooling-upgrade
-Plan: docs/superpowers/plans/2026-06-19-tooling-upgrade.md
-Started: 2026-06-19
+Branch: feat/music-portfolio-planet
+Plan: docs/superpowers/plans/2026-06-21-music-portfolio-planet.md
+Started: 2026-06-21
+Merge base: f206568
 
 ## Tasks
 
-
-- [ ] Task 2: Upgrade React 19 and TypeScript 5
-- [ ] Task 3: Upgrade Three.js, R3F, Drei — Fix Three.js Deprecations
-- [ ] Task 4: Upgrade simplex-noise to v4 — Fix Ground.tsx API
-- [ ] Task 5: Fix Code Correctness Bugs — Character and Nature
-
-
-- [x] Task 1: Replace CRA with Vite (commits 7bcfef4..1050374, review clean)
-
-- [x] Task 2: Upgrade React 19 and TypeScript 5 (commits 1050374..fedb292, review clean)
-- [x] Task 3: Upgrade Three.js, R3F, Drei (commits fedb292..33de9ae, review clean)
-
-- [x] Task 4: Upgrade simplex-noise to v4 (commits 33de9ae..47f3320, review clean)
-
-- [x] Task 5: Fix Character/Nature bugs (commits 47f3320..0acb27a, review clean)
-
-- [x] Final review: Ready to merge (whole-branch clean pass)
-- [x] Cleanup: removed dead CRA test deps (d0bdb0f)
+- [x] Task 1: Dev Infrastructure (commits f206568..ba97eb7, review clean)
+- [x] Task 2: Spots Config (commits ba97eb7..04db6fb, review clean)
+- [x] Task 3: Spotify Serverless Token (commits 04db6fb..10f5876, review clean)
+- [x] Task 4: Spotify Data Layer (commits 10f5876..bc60f0e, review clean; Minor: no ok-guard on fetch responses)
+- [x] Task 5: Space Sky (commits bc60f0e..c4c94ba, review clean)
+- [x] Task 6: Planet Terrain (commits c4c94ba..299d248, review clean)
+- [x] Task 7: Background Planet (commits 299d248..da59565, review clean)
+- [x] Task 8: Astronaut Character (commits da59565..9232304, review clean + refs fix)
+- [x] Task 9: Crystal Spot (commits 9232304..2620928, review clean)
+- [x] Task 10: Proximity HUD (commits 2620928..1d109ce, review clean)
+- [x] Task 11: App.tsx Full Wiring (commits 1d109ce..c840914, review clean; Minor: lighting prose vs code-block discrepancy, visual-tuning only)
